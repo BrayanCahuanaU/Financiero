@@ -174,6 +174,8 @@ La app ya está preparada para **Cloudflare Workers + D1 + OpenNext**. Hay dos f
 6. Guarda y lanza el primer despliegue. Wrangler creará la D1 y el esquema se inicializa en la primera petición.
 7. Desde ese momento, cada push a `main` compila y despliega automáticamente.
 
+> Si el primer build falla porque Workers Builds no pudo crear la D1, crea la base manualmente en **Storage & Databases → D1 SQL Database → Create database** con el nombre `yupay`, copia su **Database ID** y agrégalo en `wrangler.jsonc` como `"database_id": "..."`. Vuelve a desplegar.
+
 ### 2. Desplegar desde tu PC (opcional)
 
 ```bash
@@ -201,14 +203,6 @@ npm run preview
 ```
 
 Esto compila la versión de producción y la ejecuta en el runtime de Workers (Wrangler/Miniflare) con una D1 local. No necesitas crear nada: Wrangler la provisiona al vuelo.
-
-### Probar el Worker en local
-
-```bash
-npm run preview
-```
-
-Esto compila la versión de producción y la ejecuta en el runtime de Workers (Wrangler/Miniflare) con la D1 local.
 
 ### Límites del plan gratuito
 
