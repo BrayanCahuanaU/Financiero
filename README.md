@@ -167,14 +167,16 @@ La app ya está preparada para **Cloudflare Workers + D1 + OpenNext**. La versi�
 La base D1 `yupay` ya está creada y vinculada; su `database_id` está en `wrangler.jsonc`. No tienes que crearla a mano.
 
 1. El código ya está en `https://github.com/BrayanCahuanaU/Financiero`.
-2. En Cloudflare: **Workers & Pages → Create → Workers → Connect to Git**.
+2. En Cloudflare: **Workers & Pages → `yupay` → Settings → Builds → Connect**.
 3. Elige el repositorio `BrayanCahuanaU/Financiero` y la rama `main`.
 4. Configura:
    - **Build command:** `npx opennextjs-cloudflare build`
    - **Deploy command:** `npx opennextjs-cloudflare deploy -- --keep-vars`
-5. En **Settings → Variables and Secrets**, agrega `AUTH_SECRET` como **Secret** (mínimo 32 caracteres aleatorios). Sin este secreto el login falla en producción.
-6. Guarda y lanza el primer despliegue. El esquema se inicializa en la primera petición.
+5. Verifica en **Settings → Variables and Secrets** que exista `AUTH_SECRET` como **Secret**. Ya está configurado en el Worker actual.
+6. Guarda y lanza el primer build. El esquema se inicializa en la primera petición.
 7. Desde ese momento, cada push a `main` compila y despliega automáticamente.
+
+> El Worker `yupay` ya existe y está desplegado. Usa **Connect** sobre ese Worker; no crees una aplicación nueva, porque se crearía otro Worker con otro nombre.
 
 > Si despliegas en otra cuenta de Cloudflare, crea tu propia base D1 `yupay` y reemplaza el `database_id` de `wrangler.jsonc` por el de esa cuenta.
 
