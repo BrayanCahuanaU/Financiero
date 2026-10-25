@@ -1,5 +1,4 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { BANK_PROVIDERS, generateBankTransactions, mockAccountNumber } from "./banks";
 import { hashPassword } from "./password";
 import { addDays, todayISO, uid } from "./utils";
 
@@ -116,17 +115,6 @@ const SCHEMA = `
     created_at TEXT NOT NULL,
     UNIQUE(user_id, category)
   );
-
-  CREATE TABLE IF NOT EXISTS bank_links (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    provider TEXT NOT NULL,
-    account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-    status TEXT NOT NULL DEFAULT 'connected',
-    last_sync_at TEXT,
-    created_at TEXT NOT NULL,
-    UNIQUE(user_id, provider)
-  );
 `;
 
 let schemaPromise: Promise<void> | null = null;
@@ -213,99 +201,80 @@ async function seedDemo() {
     now,
   );
 
+  const bcpId = uid("acc_");
+  const bnId = uid("acc_");
+  const yapeId = uid("acc_");
+  const cashId = uid("acc_");
+
   const accountSeeds = [
     {
-      provider: "bcp" as const,
-      id: uid("acc_"),
-      name: BANK_PROVIDERS.bcp.accountName,
+      id: bcpId,
+      name: "BCP · Cuenta de ahorros",
       type: "bank",
-      color: BANK_PROVIDERS.bcp.accountColor,
-      initial: BANK_PROVIDERS.bcp.initialBalance,
+      institution: "BCP",
+      color: "#ff7a1a",
+      initial: 500,
     },
     {
-      provider: "bn" as const,
-      id: uid("acc_"),
-      name: BANK_PROVIDERS.bn.accountName,
+      id: bnId,
+      name: "Banco de la Nación · Ahorros",
       type: "bank",
-      color: BANK_PROVIDERS.bn.accountColor,
-      initial: BANK_PROVIDERS.bn.initialBalance,
+      institution: "Banco de la Nación",
+      color: "#38bdf8",
+      initial: 2500,
     },
     {
-      provider: "yape" as const,
-      id: uid("acc_"),
-      name: BANK_PROVIDERS.yape.accountName,
+      id: yapeId,
+      name: "Yape · Billetera",
       type: "wallet",
-      color: BANK_PROVIDERS.yape.accountColor,
-      initial: BANK_PROVIDERS.yape.initialBalance,
+      institution: "Yape",
+      color: "#a78bfa",
+      initial: 120,
+    },
+    {
+      id: cashId,
+      name: "Efectivo",
+      type: "cash",
+      institution: null,
+      color: "#fbbf24",
+      initial: 260,
     },
   ];
 
   for (const account of accountSeeds) {
     add(
       `INSERT INTO accounts (id, user_id, name, type, institution, number, initial_balance, currency, color, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, NULL, ?, 'PEN', ?, ?)`,
       account.id,
       userId,
       account.name,
       account.type,
-      account.provider,
-      mockAccountNumber(account.provider, userId),
+      account.institution,
       account.initial,
-      "PEN",
       account.color,
       now,
     );
-    add(
-      `INSERT INTO bank_links (id, user_id, provider, account_id, status, last_sync_at, created_at)
-       VALUES (?, ?, ?, ?, 'connected', ?, ?)`,
-      uid("lnk_"),
-      userId,
-      account.provider,
-      account.id,
-      now,
-      now,
-    );
-
-    const movements = generateBankTransactions(account.provider, userId);
-    for (const movement of movements) {
-      add(
-        `INSERT OR IGNORE INTO transactions
-         (id, user_id, account_id, type, category, description, amount, date, source, external_id, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'sync', ?, ?)`,
-        uid("tx_"),
-        userId,
-        account.id,
-        movement.type,
-        movement.category,
-        movement.description,
-        movement.amount,
-        movement.date,
-        movement.externalId,
-        now,
-      );
-    }
   }
 
-  const cashId = uid("acc_");
-  add(
-    `INSERT INTO accounts (id, user_id, name, type, institution, number, initial_balance, currency, color, created_at)
-     VALUES (?, ?, 'Efectivo', 'cash', NULL, NULL, ?, 'PEN', ?, ?)`,
-    cashId,
-    userId,
-    260,
-    "#fbbf24",
-    now,
-  );
-
   const manualTransactions = [
-    { type: "expense", category: "Alimentación", description: "Mercado de Surquillo", amount: 64.5, date: addDays(today, -1) },
-    { type: "expense", category: "Transporte", description: "Taxi al aeropuerto", amount: 45, date: addDays(today, -2) },
-    { type: "income", category: "Freelance", description: "Diseño de landing page", amount: 650, date: addDays(today, -4) },
-    { type: "expense", category: "Entretenimiento", description: "Entradas al cine", amount: 38, date: addDays(today, -6) },
-    { type: "expense", category: "Alimentación", description: "Almuerzo con equipo", amount: 72, date: addDays(today, -8) },
-    { type: "income", category: "Ventas", description: "Venta de bici usada", amount: 420, date: addDays(today, -12) },
-    { type: "expense", category: "Mascotas", description: "Vacuna de Michi", amount: 85, date: addDays(today, -15) },
-    { type: "expense", category: "Compras", description: "Zapatillas para correr", amount: 289, date: addDays(today, -20) },
+    { accountId: cashId, type: "expense", category: "Alimentación", description: "Mercado de Surquillo", amount: 64.5, date: addDays(today, -1) },
+    { accountId: cashId, type: "expense", category: "Transporte", description: "Taxi al aeropuerto", amount: 45, date: addDays(today, -2) },
+    { accountId: bcpId, type: "income", category: "Freelance", description: "Diseño de landing page", amount: 650, date: addDays(today, -4) },
+    { accountId: yapeId, type: "expense", category: "Entretenimiento", description: "Entradas al cine", amount: 38, date: addDays(today, -6) },
+    { accountId: yapeId, type: "expense", category: "Alimentación", description: "Almuerzo con equipo", amount: 72, date: addDays(today, -8) },
+    { accountId: cashId, type: "income", category: "Ventas", description: "Venta de bici usada", amount: 420, date: addDays(today, -12) },
+    { accountId: cashId, type: "expense", category: "Mascotas", description: "Vacuna de Michi", amount: 85, date: addDays(today, -15) },
+    { accountId: bcpId, type: "expense", category: "Compras", description: "Zapatillas para correr", amount: 289, date: addDays(today, -20) },
+    { accountId: bcpId, type: "income", category: "Sueldo", description: "Sueldo mensual", amount: 2800, date: addDays(today, -35) },
+    { accountId: bcpId, type: "expense", category: "Vivienda", description: "Alquiler", amount: 900, date: addDays(today, -34) },
+    { accountId: bcpId, type: "income", category: "Sueldo", description: "Sueldo mensual", amount: 2800, date: addDays(today, -65) },
+    { accountId: bcpId, type: "expense", category: "Vivienda", description: "Alquiler", amount: 900, date: addDays(today, -64) },
+    { accountId: bcpId, type: "income", category: "Sueldo", description: "Sueldo mensual", amount: 2800, date: addDays(today, -95) },
+    { accountId: bcpId, type: "expense", category: "Vivienda", description: "Alquiler", amount: 900, date: addDays(today, -94) },
+    { accountId: bcpId, type: "income", category: "Sueldo", description: "Sueldo mensual", amount: 2800, date: addDays(today, -125) },
+    { accountId: bcpId, type: "expense", category: "Vivienda", description: "Alquiler", amount: 900, date: addDays(today, -124) },
+    { accountId: bcpId, type: "income", category: "Sueldo", description: "Sueldo mensual", amount: 2800, date: addDays(today, -155) },
+    { accountId: bcpId, type: "expense", category: "Vivienda", description: "Alquiler", amount: 900, date: addDays(today, -154) },
   ];
   for (const tx of manualTransactions) {
     add(
@@ -314,7 +283,7 @@ async function seedDemo() {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'manual', NULL, ?)`,
       uid("tx_"),
       userId,
-      cashId,
+      tx.accountId,
       tx.type,
       tx.category,
       tx.description,

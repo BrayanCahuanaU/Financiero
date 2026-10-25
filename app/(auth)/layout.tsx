@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, Landmark, LockKeyhole, PiggyBank, Smartphone } from "lucide-react";
+import { ArrowUpRight, LockKeyhole, PiggyBank, Smartphone, Wallet } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { getSessionUser } from "@/lib/auth";
 
@@ -33,13 +33,13 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
             </span>
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-mist">
-            Un panel claro para decidir mejor: sigue tus movimientos de BCP, Banco de la Nación y
-            Yape, planifica tus ahorros y mira cómo crece tu patrimonio.
+            Un panel claro para decidir mejor: registra tus gastos e ingresos, planifica tus ahorros
+            y mira cómo crece tu patrimonio.
           </p>
 
           <div className="mt-8 space-y-3.5">
             {[
-              { icon: Landmark, text: "Movimientos bancarios y saldo actualizado" },
+              { icon: Wallet, text: "Cuentas y saldos actualizados al día" },
               { icon: PiggyBank, text: "Metas de ahorro con aportes y progreso" },
               { icon: Smartphone, text: "Tu información sincronizada en celular y laptop" },
               { icon: LockKeyhole, text: "Acceso privado con sesión persistente y segura" },

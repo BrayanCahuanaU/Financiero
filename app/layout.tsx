@@ -8,9 +8,9 @@ export const metadata: Metadata = {
     template: "%s · Yupay",
   },
   description:
-    "Administra tus gastos, ahorros, inversiones e ingresos. Conecta tus cuentas de BCP, Banco de la Nación y Yape, y mantén tus finanzas claras desde tu celular o laptop.",
+    "Administra tus gastos, ahorros, inversiones e ingresos. Mantén tus finanzas claras desde tu celular o laptop.",
   applicationName: "Yupay",
-  keywords: ["finanzas personales", "gastos", "ahorros", "inversiones", "Perú", "Yape", "BCP"],
+  keywords: ["finanzas personales", "gastos", "ahorros", "inversiones", "Perú"],
 };
 
 export const viewport: Viewport = {

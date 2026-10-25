@@ -14,7 +14,7 @@ export async function GET() {
   const db = await getDb();
   const { results = [] } = await db
     .prepare(
-      `SELECT t.date, t.type, t.category, t.description, t.amount, t.source, a.name AS account
+      `SELECT t.date, t.type, t.category, t.description, t.amount, a.name AS account
        FROM transactions t JOIN accounts a ON a.id = t.account_id
        WHERE t.user_id = ? ORDER BY t.date DESC, t.created_at DESC`,
     )
@@ -25,7 +25,6 @@ export async function GET() {
       category: string;
       description: string;
       amount: number;
-      source: string;
       account: string;
     }>();
 
@@ -38,7 +37,7 @@ export async function GET() {
       row.description,
       row.account,
       row.amount.toFixed(2),
-      row.source === "sync" ? "Banco" : "Manual",
+      "Manual",
     ]
       .map((value) => escapeCsv(String(value)))
       .join(","),

@@ -65,7 +65,6 @@ export default async function DashboardPage() {
   const incomeDelta = delta(d.income, d.prevIncome);
   const expenseDelta = delta(d.expense, d.prevExpense);
   const overBudget = d.budgets.some((budget) => budget.progress > 100);
-  const connected = d.bankLinks.length > 0;
 
   const kpis = [
     {
@@ -127,7 +126,7 @@ export default async function DashboardPage() {
         }
       />
 
-      {!connected && d.txCount === 0 && (
+      {d.txCount === 0 && (
         <div className="card mb-5 flex flex-col gap-4 border-mint/20 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mint/10 text-mint">
@@ -136,12 +135,16 @@ export default async function DashboardPage() {
             <div>
               <p className="text-sm font-semibold text-white">Empieza en 2 minutos</p>
               <p className="mt-0.5 text-xs text-mist">
-                Conecta BCP, Banco de la Nación o Yape, o registra tu primer movimiento manual.
+                Crea una cuenta y registra tu primer movimiento manual.
               </p>
             </div>
           </div>
-          <Link href="/bancos" className="btn btn-primary shrink-0">
-            Conectar mis cuentas <ArrowRight className="h-4 w-4" />
+          <Link
+            href={d.accounts.length === 0 ? "/cuentas" : "/movimientos?nuevo=1"}
+            className="btn btn-primary shrink-0"
+          >
+            {d.accounts.length === 0 ? "Crear mi primera cuenta" : "Registrar movimiento"}
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}
@@ -213,9 +216,7 @@ export default async function DashboardPage() {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-white">Mis cuentas</h2>
-              <p className="text-[11px] text-slate-500">
-                {connected ? `${d.bankLinks.length} conexiones bancarias activas` : "Saldos actualizados al día"}
-              </p>
+              <p className="text-[11px] text-slate-500">Saldos actualizados al día</p>
             </div>
             <Link href="/cuentas" className="text-[11px] font-medium text-mint hover:text-mint-bright">
               Ver todas
@@ -226,7 +227,7 @@ export default async function DashboardPage() {
             <EmptyState
               icon={<Wallet className="h-5 w-5" />}
               title="Sin cuentas todavía"
-              description="Agrega una cuenta o conecta un banco para empezar a seguir tus saldos."
+              description="Agrega una cuenta para empezar a seguir tus saldos."
               action={
                 <Link href="/cuentas" className="btn btn-secondary">
                   Agregar cuenta

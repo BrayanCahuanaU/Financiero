@@ -98,15 +98,3 @@ export const passwordSchema = z.object({
     .min(8, "La nueva contraseña debe tener al menos 8 caracteres.")
     .max(128),
 });
-
-export const bankConnectSchema = z.object({
-  provider: z.enum(["bcp", "bn", "yape"]),
-  document: z.string().optional(),
-  phone: z.string().optional(),
-  password: z.string().optional(),
-  code: z.string().optional(),
-});
-
-export const bankProviderSchema = z.object({
-  provider: z.enum(["bcp", "bn", "yape"]),
-});

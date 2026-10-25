@@ -130,14 +130,14 @@ export default async function SettingsPage() {
               <div>
                 <p className="text-sm font-semibold text-white">Yupay · Finanzas personales</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-mist">
-                  Versión 1.0 · Hecho para Perú. Tus datos se guardan en tu propia base de datos
-                  SQLite, en el servidor donde corre esta app.
+                  Versión 1.0 · Hecho para Perú. Tus datos se guardan en Cloudflare D1, la base de
+                  datos del servidor.
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/bancos" className="btn btn-secondary">
-                Conexiones
+              <Link href="/cuentas" className="btn btn-secondary">
+                Mis cuentas
               </Link>
               <Link href="/dashboard" className="btn btn-secondary">
                 Ir al resumen

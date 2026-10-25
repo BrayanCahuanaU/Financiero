@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeftRight,
   ChevronRight,
-  Landmark,
   LayoutDashboard,
   LineChart,
   LogOut,
@@ -43,10 +42,6 @@ const GROUPS: Array<{ label: string; items: NavItem[] }> = [
     ],
   },
   {
-    label: "Conexiones",
-    items: [{ href: "/bancos", label: "Bancos y Yape", icon: Landmark }],
-  },
-  {
     label: "Sistema",
     items: [{ href: "/ajustes", label: "Ajustes", icon: Settings }],
   },
@@ -56,7 +51,7 @@ const MOBILE_NAV: NavItem[] = [
   { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
   { href: "/movimientos", label: "Movs.", icon: ArrowLeftRight },
   { href: "/ahorros", label: "Ahorros", icon: PiggyBank },
-  { href: "/bancos", label: "Bancos", icon: Landmark },
+  { href: "/cuentas", label: "Cuentas", icon: Wallet },
 ];
 
 function active(pathname: string, href: string) {

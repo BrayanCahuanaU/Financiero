@@ -5,7 +5,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   CheckCircle2,
-  Landmark,
   LockKeyhole,
   PiggyBank,
   ShieldCheck,
@@ -45,37 +44,16 @@ const FEATURES = [
       "Pon límites por categoría y recibe una señal clara cuando estás por pasarte del presupuesto.",
   },
   {
-    icon: Landmark,
-    title: "Bancos conectados",
+    icon: Wallet,
+    title: "Cuentas y saldos",
     description:
-      "Importa y sincroniza movimientos de BCP, Banco de la Nación y Yape sin registrar todo a mano.",
+      "Agrupa tus cuentas bancarias, billeteras y efectivo; cada movimiento actualiza tu saldo automáticamente.",
   },
   {
     icon: Smartphone,
     title: "En tu celular y laptop",
     description:
       "Tu cuenta vive en el servidor: entra desde cualquier dispositivo y encuentra los mismos datos.",
-  },
-];
-
-const BANKS = [
-  {
-    name: "BCP",
-    full: "Banco de Crédito del Perú",
-    color: "#ff7a1a",
-    soft: "rgba(255,122,26,0.12)",
-  },
-  {
-    name: "Banco de la Nación",
-    full: "Cuenta de ahorros y haberes",
-    color: "#38bdf8",
-    soft: "rgba(56,189,248,0.12)",
-  },
-  {
-    name: "Yape",
-    full: "Billetera digital",
-    color: "#a78bfa",
-    soft: "rgba(167,139,250,0.14)",
   },
 ];
 
@@ -91,9 +69,6 @@ export default async function LandingPage() {
           <nav className="hidden items-center gap-7 text-xs font-medium text-mist sm:flex">
             <a href="#funciones" className="transition hover:text-white">
               Funciones
-            </a>
-            <a href="#bancos" className="transition hover:text-white">
-              Bancos
             </a>
             <a href="#seguridad" className="transition hover:text-white">
               Seguridad
@@ -136,8 +111,8 @@ export default async function LandingPage() {
                 </span>
               </h1>
               <p className="mt-5 max-w-lg text-sm leading-relaxed text-mist sm:text-base">
-                Gastos, ahorros, inversiones y cuentas bancarias en un solo panel. Conecta BCP,
-                Banco de la Nación y Yape, y toma mejores decisiones desde tu celular o laptop.
+                Gastos, ahorros, inversiones y cuentas en un solo panel. Registra tus movimientos y
+                toma mejores decisiones desde tu celular o laptop.
               </p>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -315,64 +290,6 @@ export default async function LandingPage() {
                 </div>
               );
             })}
-          </div>
-        </section>
-
-        <section id="bancos" className="border-y border-line/50 bg-ink-900/25">
-          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-20">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-300/80">
-                Conexiones bancarias
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                Tus movimientos bancarios, sin digitar uno por uno.
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-mist">
-                Sincroniza tus cuentas y deja que Yupay haga el trabajo pesado: saldos, historial y
-                categorías listos para analizar. Esta versión incluye un modo demostración con datos
-                de ejemplo, mientras los bancos habilitan sus APIs públicas.
-              </p>
-              <div className="mt-5 space-y-2">
-                {[
-                  "Importación de los últimos 150 días",
-                  "Sincronización sin movimientos duplicados",
-                  "Desconecta cuando quieras sin perder tu historial",
-                ].map((item) => (
-                  <p key={item} className="flex items-center gap-2 text-[11px] text-slate-300">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-mint" /> {item}
-                  </p>
-                ))}
-              </div>
-              <Link href="/register" className="btn btn-secondary mt-6">
-                Probar las conexiones <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-
-            <div className="grid gap-3">
-              {BANKS.map((bank) => (
-                <div key={bank.name} className="card flex items-center gap-3 p-4">
-                  <span
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-[10px] font-bold"
-                    style={{
-                      backgroundColor: bank.soft,
-                      borderColor: `${bank.color}35`,
-                      color: bank.color,
-                    }}
-                  >
-                    {bank.name === "Banco de la Nación" ? "BN" : bank.name.slice(0, 4).toUpperCase()}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-semibold text-white">{bank.name}</p>
-                    <p className="truncate text-[10px] text-slate-500">{bank.full}</p>
-                  </div>
-                  <span className="chip !text-[9px]">Modo demo</span>
-                </div>
-              ))}
-              <p className="px-1 text-[10px] leading-relaxed text-slate-500">
-                No pedimos ni almacenamos tus claves bancarias reales. Las conexiones actuales son
-                simuladas y están listas para reemplazarse por integraciones oficiales.
-              </p>
-            </div>
           </div>
         </section>
 

@@ -5,17 +5,15 @@ import {
   CreditCard,
   Landmark,
   PiggyBank,
-  Plus,
   Smartphone,
   Wallet,
 } from "lucide-react";
 import { AccountForm } from "@/components/AccountForm";
-import { Boarding } from "@/components/Boarding";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { requireSessionUser } from "@/lib/auth";
-import { listAccounts, listBankLinks } from "@/lib/data";
+import { listAccounts } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -30,10 +28,8 @@ const TYPE_META: Record<string, { label: string; icon: typeof Wallet }> = {
 export default async function AccountsPage() {
   const user = await requireSessionUser();
   const accounts = await listAccounts(user.id);
-  const links = await listBankLinks(user.id);
   const currency = user.currency;
   const total = accounts.reduce((sum, account) => sum + account.balance, 0);
-  const linkedProviders = new Map(links.map((link) => [link.provider, link]));
 
   return (
     <>
@@ -58,13 +54,9 @@ export default async function AccountsPage() {
               {formatCurrency(total, currency)}
             </p>
             <p className="mt-1.5 text-xs text-mist">
-              {accounts.length} cuenta{accounts.length === 1 ? "" : "s"} · {links.length}{" "}
-              {links.length === 1 ? "conexión bancaria" : "conexiones bancarias"}
+              {accounts.length} cuenta{accounts.length === 1 ? "" : "s"} · saldos actualizados
             </p>
           </div>
-          <Link href="/bancos" className="btn btn-secondary shrink-0">
-            <Plus className="h-4 w-4" /> Conectar banco
-          </Link>
         </div>
 
         {accounts.length > 0 && (
@@ -96,7 +88,6 @@ export default async function AccountsPage() {
           {accounts.map((account) => {
             const meta = TYPE_META[account.type] ?? TYPE_META.bank;
             const Icon = meta.icon;
-            const linked = account.institution ? linkedProviders.get(account.institution) : undefined;
             return (
               <article key={account.id} className="card group relative overflow-hidden p-4 sm:p-5">
                 <div
@@ -144,13 +135,7 @@ export default async function AccountsPage() {
 
                 <div className="mt-4 flex items-center justify-between gap-2 border-t border-line/60 pt-3">
                   <div className="flex items-center gap-1.5">
-                    {linked ? (
-                      <span className="chip !border-mint/20 !bg-mint/[0.06] !text-[10px] !text-mint">
-                        <span className="h-1 w-1 rounded-full bg-mint" /> Conectada
-                      </span>
-                    ) : (
-                      <span className="chip !text-[10px]">Manual</span>
-                    )}
+                    <span className="chip !text-[10px]">Manual</span>
                     <span className="chip !text-[10px]">{account.currency}</span>
                   </div>
                   <Link
@@ -175,7 +160,7 @@ export default async function AccountsPage() {
             <p className="text-xs font-semibold text-white">Saldos siempre al día</p>
             <p className="mt-1 text-[11px] leading-relaxed text-mist">
               Cada ingreso o gasto que registras actualiza el saldo de su cuenta automáticamente.
-              También puedes importar movimientos desde Bancos.
+              Puedes crear cuentas de banco, billetera, efectivo o tarjeta.
             </p>
           </div>
         </div>
@@ -192,18 +177,6 @@ export default async function AccountsPage() {
           </div>
         </div>
       </section>
-
-      {accounts.length > 0 && (
-        <Boarding
-          title="¿Quieres agregar una cuenta de otro banco?"
-          description="Crea una cuenta manual o conecta BCP, Banco de la Nación y Yape en modo demostración."
-          action={
-            <Link href="/bancos" className="btn btn-secondary">
-              Ir a conexiones
-            </Link>
-          }
-        />
-      )}
     </>
   );
 }

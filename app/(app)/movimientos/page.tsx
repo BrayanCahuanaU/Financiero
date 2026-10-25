@@ -4,7 +4,6 @@ import {
   ArrowUpRight,
   Download,
   Filter,
-  Landmark,
   Search,
   Wallet,
   X,
@@ -271,13 +270,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                     <p className="hidden items-center gap-1 text-[10px] text-slate-500 sm:flex">
                       {transaction.category}
                       <span className="text-slate-600">·</span>
-                      {transaction.source === "sync" ? (
-                        <span className="inline-flex items-center gap-0.5">
-                          <Landmark className="h-2.5 w-2.5" /> Banco
-                        </span>
-                      ) : (
-                        "Manual"
-                      )}
+                      Manual
                     </p>
                   </div>
                 </div>

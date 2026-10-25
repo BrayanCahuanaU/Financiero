@@ -1,5 +1,4 @@
 import { getDb } from "./db";
-import { BANK_PROVIDERS, generateBankTransactions, getProvider, mockAccountNumber, type BankProviderId } from "./banks";
 import { categoryColor, currentMonthKey, monthLabel, monthRange, uid } from "./utils";
 
 export type Account = {
@@ -62,17 +61,6 @@ export type Budget = {
   monthly_limit: number;
   spent: number;
   progress: number;
-};
-
-export type BankLink = {
-  id: string;
-  provider: string;
-  account_id: string;
-  status: string;
-  last_sync_at: string | null;
-  account_name: string;
-  account_balance: number;
-  movement_count: number;
 };
 
 const ACCOUNT_BALANCE_SELECT = `
@@ -527,153 +515,6 @@ export async function deleteBudget(userId: string, budgetId: string): Promise<bo
   return result.meta.changes > 0;
 }
 
-export async function listBankLinks(userId: string): Promise<BankLink[]> {
-  const db = await getDb();
-  const { results = [] } = await db
-    .prepare(
-      `SELECT l.id, l.provider, l.account_id, l.status, l.last_sync_at,
-              a.name AS account_name,
-              a.initial_balance + COALESCE((
-                SELECT SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE -t.amount END)
-                FROM transactions t WHERE t.account_id = a.id
-              ), 0) AS account_balance,
-              (SELECT COUNT(*) FROM transactions t WHERE t.account_id = a.id AND t.source = 'sync') AS movement_count
-       FROM bank_links l
-       JOIN accounts a ON a.id = l.account_id
-       WHERE l.user_id = ?
-       ORDER BY l.created_at ASC`,
-    )
-    .bind(userId)
-    .all<BankLink>();
-  return results;
-}
-
-async function importBankMovements(
-  userId: string,
-  accountId: string,
-  provider: BankProviderId,
-): Promise<number> {
-  const db = await getDb();
-  const movements = generateBankTransactions(provider, userId);
-  if (movements.length === 0) return 0;
-
-  const now = new Date().toISOString();
-  const statements = movements.map((movement) =>
-    db
-      .prepare(
-        `INSERT OR IGNORE INTO transactions
-         (id, user_id, account_id, type, category, description, amount, date, source, external_id, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'sync', ?, ?)`,
-      )
-      .bind(
-        uid("tx_"),
-        userId,
-        accountId,
-        movement.type,
-        movement.category,
-        movement.description,
-        movement.amount,
-        movement.date,
-        movement.externalId,
-        now,
-      ),
-  );
-
-  const results = await db.batch(statements);
-  return results.reduce((sum, result) => sum + (result.meta?.changes ?? 0), 0);
-}
-
-/**
- * Conexión bancaria (modo demostración).
- *
- * No se almacenan credenciales. Cuando exista un contrato oficial con el banco,
- * reemplaza `importBankMovements` por la llamada a la API/open banking y
- * conserva el mismo esquema de deduplicación por `external_id`.
- */
-export async function connectBank(userId: string, provider: BankProviderId) {
-  const meta = BANK_PROVIDERS[provider];
-  if (!meta) throw new Error("Banco no soportado.");
-
-  const db = await getDb();
-  const existing = await db
-    .prepare("SELECT id FROM bank_links WHERE user_id = ? AND provider = ?")
-    .bind(userId, provider)
-    .first<{ id: string }>();
-  if (existing) throw new Error("Ya tienes este banco conectado.");
-
-  let account = await db
-    .prepare("SELECT id FROM accounts WHERE user_id = ? AND institution = ?")
-    .bind(userId, provider)
-    .first<{ id: string }>();
-
-  const now = new Date().toISOString();
-  const statements = [];
-
-  if (!account) {
-    const accountId = uid("acc_");
-    statements.push(
-      db
-        .prepare(
-          `INSERT INTO accounts
-           (id, user_id, name, type, institution, number, initial_balance, currency, color, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, 'PEN', ?, ?)`,
-        )
-        .bind(
-          accountId,
-          userId,
-          meta.accountName,
-          meta.accountType,
-          provider,
-          mockAccountNumber(provider, userId),
-          meta.initialBalance,
-          meta.accountColor,
-          now,
-        ),
-    );
-    account = { id: accountId };
-  }
-
-  statements.push(
-    db
-      .prepare(
-        `INSERT INTO bank_links (id, user_id, provider, account_id, status, last_sync_at, created_at)
-         VALUES (?, ?, ?, ?, 'connected', ?, ?)`,
-      )
-      .bind(uid("lnk_"), userId, provider, account.id, now, now),
-  );
-
-  await db.batch(statements);
-
-  const imported = await importBankMovements(userId, account.id, provider);
-  return { imported, accountId: account.id };
-}
-
-export async function syncBank(userId: string, provider: BankProviderId) {
-  const db = await getDb();
-  const link = await db
-    .prepare("SELECT * FROM bank_links WHERE user_id = ? AND provider = ?")
-    .bind(userId, provider)
-    .first<{ id: string; account_id: string; last_sync_at: string | null }>();
-  if (!link) throw new Error("Este banco no está conectado.");
-
-  const imported = await importBankMovements(userId, link.account_id, provider);
-  const now = new Date().toISOString();
-  await db
-    .prepare("UPDATE bank_links SET last_sync_at = ?, status = 'connected' WHERE id = ?")
-    .bind(now, link.id)
-    .run();
-  return { imported, last_sync_at: now };
-}
-
-export async function disconnectBank(userId: string, provider: BankProviderId): Promise<boolean> {
-  const db = await getDb();
-  const result = await db
-    .prepare("DELETE FROM bank_links WHERE user_id = ? AND provider = ?")
-    .bind(userId, provider)
-    .run();
-  return result.meta.changes > 0;
-}
-
 export type Dashboard = {
   monthKey: string;
   monthName: string;
@@ -696,17 +537,15 @@ export type Dashboard = {
   goals: Goal[];
   budgets: Budget[];
   recent: Transaction[];
-  bankLinks: BankLink[];
 };
 
 export async function getDashboard(userId: string, monthKey = currentMonthKey()): Promise<Dashboard> {
   const db = await getDb();
-  const [accounts, goals, budgets, investments, bankLinks] = await Promise.all([
+  const [accounts, goals, budgets, investments] = await Promise.all([
     listAccounts(userId),
     listGoals(userId),
     listBudgets(userId, monthKey),
     listInvestments(userId),
-    listBankLinks(userId),
   ]);
 
   const { start, end } = monthRange(monthKey);
@@ -824,7 +663,6 @@ export async function getDashboard(userId: string, monthKey = currentMonthKey())
     goals,
     budgets,
     recent,
-    bankLinks,
   };
 }
 
@@ -865,25 +703,22 @@ export async function countUserData(userId: string) {
         (SELECT COUNT(*) FROM accounts WHERE user_id = ?) AS accounts,
         (SELECT COUNT(*) FROM transactions WHERE user_id = ?) AS transactions,
         (SELECT COUNT(*) FROM savings_goals WHERE user_id = ?) AS goals,
-        (SELECT COUNT(*) FROM investments WHERE user_id = ?) AS investments,
-        (SELECT COUNT(*) FROM bank_links WHERE user_id = ?) AS links`,
+        (SELECT COUNT(*) FROM investments WHERE user_id = ?) AS investments`,
     )
-    .bind(userId, userId, userId, userId, userId)
+    .bind(userId, userId, userId, userId)
     .first<{
       accounts: number;
       transactions: number;
       goals: number;
       investments: number;
-      links: number;
     }>();
-  return row ?? { accounts: 0, transactions: 0, goals: 0, investments: 0, links: 0 };
+  return row ?? { accounts: 0, transactions: 0, goals: 0, investments: 0 };
 }
 
 export async function resetUserData(userId: string): Promise<void> {
   const db = await getDb();
   await db.batch([
     db.prepare("DELETE FROM transactions WHERE user_id = ?").bind(userId),
-    db.prepare("DELETE FROM bank_links WHERE user_id = ?").bind(userId),
     db.prepare("DELETE FROM accounts WHERE user_id = ?").bind(userId),
     db.prepare("DELETE FROM goal_contributions WHERE user_id = ?").bind(userId),
     db.prepare("DELETE FROM savings_goals WHERE user_id = ?").bind(userId),
@@ -891,5 +726,3 @@ export async function resetUserData(userId: string): Promise<void> {
     db.prepare("DELETE FROM budgets WHERE user_id = ?").bind(userId),
   ]);
 }
-
-export { getProvider };

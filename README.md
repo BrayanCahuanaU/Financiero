@@ -1,6 +1,6 @@
 # Yupay · Finanzas personales
 
-Sistema web para administrar **gastos, ahorros, inversiones e ingresos**, con seguimiento de cuentas bancarias de **BCP, Banco de la Nación y Yape**, sesión persistente y diseño responsive para celular y laptop.
+Sistema web para administrar **gastos, ahorros, inversiones e ingresos**, con cuentas, sesión persistente y diseño responsive para celular y laptop.
 
 **Producción:** [https://yupay.brayan-cahuana.workers.dev](https://yupay.brayan-cahuana.workers.dev)
 
@@ -26,7 +26,7 @@ En la pantalla de login hay un botón **“Entrar con la cuenta demo”** que cr
 - **Ahorros:** metas con monto objetivo, fecha, color y aportes; progreso individual y global.
 - **Inversiones:** portafolio con monto invertido, valor actual, rendimiento en soles y porcentaje, distribución por tipo y actualización de valor.
 - **Presupuestos:** límite mensual por categoría, gasto real, disponible, alertas al acercarse o excederse y guía 50/30/20.
-- **Bancos:** conexión y sincronización de BCP, Banco de la Nación y Yape; deduplicación de movimientos y saldo por entidad.
+- **Sin conexiones bancarias:** los movimientos se registran manualmente; no se importan ni generan datos de bancos.
 - **Ajustes:** perfil y moneda, cambio de contraseña, cierre de sesión, exportación de datos y borrado de datos financieros.
 - **Sesión persistente:** cookie `HttpOnly` de 30 días o 180 días si se marca “Mantener mi sesión iniciada”.
 - **Responsive:** sidebar en escritorio, barra inferior y menú deslizable en móvil.
@@ -87,50 +87,22 @@ app/
   (app)/ahorros                 Metas y aportes
   (app)/inversiones             Portafolio
   (app)/presupuestos            Límites mensuales
-  (app)/bancos                  Conexiones BCP / BN / Yape
   (app)/ajustes                 Perfil, seguridad y datos
   api/auth                      Registro, login, logout
   api/transactions|accounts     CRUD de movimientos y cuentas
   api/goals|investments|budgets CRUD del resto
-  api/banks                     Conectar, sincronizar, desconectar
   api/profile|data              Perfil, contraseña, borrado
 components/                     UI, gráficos SVG, formularios y shell
 lib/
   db.ts                         Esquema D1 + seed demo
   data.ts                       Consultas y lógica de negocio (D1 async)
   auth.ts                       Sesión JWT + cookie
-  banks.ts                      Proveedores y generador de movimientos
   schemas.ts                    Validaciones Zod
 wrangler.jsonc                  Configuración del Worker + binding D1
 open-next.config.ts             Configuración de OpenNext para Cloudflare
 ```
 
-Wrangler crea y vincula la base D1 automáticamente en el primer despliegue. El esquema se inicializa solo con `CREATE TABLE IF NOT EXISTS` en `lib/db.ts`, dentro de un batch de D1.
-
----
-
-## Conexiones bancarias: estado actual
-
-**Importante:** BCP, Banco de la Nación y Yape **no ofrecen hoy una API pública de open banking** accesible para aplicaciones de terceros. Por eso, esta versión implementa:
-
-1. Una **capa de conexión demostrativa** que importa movimientos de ejemplo realistas de los últimos 150 días.
-2. La misma estructura que usaría una integración real: entidad → cuenta → movimientos con `external_id` único → sincronización sin duplicados.
-3. La UI etiqueta claramente el modo demostración y **nunca solicita ni almacena claves bancarias**.
-
-Al conectar, se crea la cuenta con un saldo inicial y se importan los movimientos. Al sincronizar se insertan solo los nuevos; desconectar conserva el historial.
-
-### Cómo conectar una API real
-
-En `lib/data.ts`, reemplaza `importBankMovements()` por una llamada al proveedor oficial:
-
-```ts
-// 1. Obtén movimientos desde la API oficial (OAuth2 / open banking).
-// 2. Mapea cada movimiento a:
-//    { externalId, type, category, description, amount, date }
-// 3. Inserta con INSERT OR IGNORE usando (user_id, external_id) para evitar duplicados.
-```
-
-El resto de la aplicación (saldos, presupuestos, reportes, UI) no necesita cambios.
+La base D1 ya está vinculada en `wrangler.jsonc`; el esquema se inicializa solo con `CREATE TABLE IF NOT EXISTS` en `lib/db.ts`, dentro de un batch de D1.
 
 ---
 
@@ -141,7 +113,7 @@ El resto de la aplicación (saldos, presupuestos, reportes, UI) no necesita camb
 - Todas las consultas y mutaciones filtran por `user_id`: un usuario no puede leer ni modificar datos de otro.
 - Validación de entrada con Zod en cada endpoint.
 - Límite de intentos de login en memoria (8 intentos por 10 minutos por IP + correo).
-- Las credenciales bancarias **no se solicitan, no se envían y no se guardan**.
+- Esta versión no se conecta a bancos, no solicita credenciales bancarias y no importa movimientos automáticamente.
 - Puedes exportar tu historial a CSV y borrar tus datos financieros desde Ajustes.
 
 Para un despliegue serio, añade rate limiting persistente, backups de la base de datos y HTTPS obligatorio.
