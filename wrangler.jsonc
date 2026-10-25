@@ -11,11 +11,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "yupay"
-      // Sin database_id: Wrangler crea y vincula la base automáticamente
-      // la primera vez que se despliega. No necesitas commitear el UUID.
-      // Si la creas a mano en el panel, agrega aquí:
-      // "database_id": "PEGA-AQUI-EL-DATABASE-ID"
+      "database_name": "yupay",
+      "database_id": "b900953d-3bce-44b2-aa3e-66ee6255cf35"
     }
   ],
   "observability": {

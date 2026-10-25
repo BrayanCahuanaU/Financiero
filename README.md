@@ -2,6 +2,8 @@
 
 Sistema web para administrar **gastos, ahorros, inversiones e ingresos**, con seguimiento de cuentas bancarias de **BCP, Banco de la Nación y Yape**, sesión persistente y diseño responsive para celular y laptop.
 
+**Producción:** [https://yupay.brayan-cahuana.workers.dev](https://yupay.brayan-cahuana.workers.dev)
+
 > Tus datos viven en el servidor (Cloudflare D1). Al iniciar sesión desde otro dispositivo con la misma cuenta, encuentras exactamente la misma información.
 
 ---
@@ -158,11 +160,11 @@ Para un despliegue serio, añade rate limiting persistente, backups de la base d
 
 ## Despliegue en Cloudflare (plan gratuito)
 
-La app ya está preparada para **Cloudflare Workers + D1 + OpenNext**. Hay dos formas de desplegar; la recomendada es conectar el repositorio a **Workers Builds** para que cada `git push` publique una versión nueva.
+La app ya está preparada para **Cloudflare Workers + D1 + OpenNext**. La versión desplegada está en `https://yupay.brayan-cahuana.workers.dev`. Hay dos formas de desplegar; la recomendada es conectar el repositorio a **Workers Builds** para que cada `git push` publique una versión nueva.
 
 ### 1. Despliegue automático desde GitHub (recomendado)
 
-`wrangler.jsonc` declara el binding D1 **sin `database_id`**. Wrangler crea la base `yupay` y la vincula automáticamente en el primer despliegue, así que no tienes que crearla a mano ni copiar UUIDs.
+La base D1 `yupay` ya está creada y vinculada; su `database_id` está en `wrangler.jsonc`. No tienes que crearla a mano.
 
 1. El código ya está en `https://github.com/BrayanCahuanaU/Financiero`.
 2. En Cloudflare: **Workers & Pages → Create → Workers → Connect to Git**.
@@ -171,10 +173,10 @@ La app ya está preparada para **Cloudflare Workers + D1 + OpenNext**. Hay dos f
    - **Build command:** `npx opennextjs-cloudflare build`
    - **Deploy command:** `npx opennextjs-cloudflare deploy -- --keep-vars`
 5. En **Settings → Variables and Secrets**, agrega `AUTH_SECRET` como **Secret** (mínimo 32 caracteres aleatorios). Sin este secreto el login falla en producción.
-6. Guarda y lanza el primer despliegue. Wrangler creará la D1 y el esquema se inicializa en la primera petición.
+6. Guarda y lanza el primer despliegue. El esquema se inicializa en la primera petición.
 7. Desde ese momento, cada push a `main` compila y despliega automáticamente.
 
-> Si el primer build falla porque Workers Builds no pudo crear la D1, crea la base manualmente en **Storage & Databases → D1 SQL Database → Create database** con el nombre `yupay`, copia su **Database ID** y agrégalo en `wrangler.jsonc` como `"database_id": "..."`. Vuelve a desplegar.
+> Si despliegas en otra cuenta de Cloudflare, crea tu propia base D1 `yupay` y reemplaza el `database_id` de `wrangler.jsonc` por el de esa cuenta.
 
 ### 2. Desplegar desde tu PC (opcional)
 
@@ -184,7 +186,7 @@ npm run deploy
 npx wrangler secret put AUTH_SECRET
 ```
 
-`npm run deploy` compila con OpenNext y publica el Worker; la D1 se crea sola. Después de definir el secreto, visita la URL `*.workers.dev` que imprime Wrangler.
+`npm run deploy` compila con OpenNext y publica el Worker. Después de definir el secreto, visita la URL `*.workers.dev` que imprime Wrangler.
 
 ### 3. Configurar el secreto de sesiones
 
