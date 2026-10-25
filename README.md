@@ -101,10 +101,9 @@ lib/
   schemas.ts                    Validaciones Zod
 wrangler.jsonc                  Configuración del Worker + binding D1
 open-next.config.ts             Configuración de OpenNext para Cloudflare
-scripts/cf-setup.mjs            Ayuda para crear la base D1
 ```
 
-La base de datos se inicializa sola con `CREATE TABLE IF NOT EXISTS` en `lib/db.ts`, dentro de un batch de D1.
+Wrangler crea y vincula la base D1 automáticamente en el primer despliegue. El esquema se inicializa solo con `CREATE TABLE IF NOT EXISTS` en `lib/db.ts`, dentro de un batch de D1.
 
 ---
 
@@ -161,47 +160,47 @@ Para un despliegue serio, añade rate limiting persistente, backups de la base d
 
 La app ya está preparada para **Cloudflare Workers + D1 + OpenNext**. Hay dos formas de desplegar; la recomendada es conectar el repositorio a **Workers Builds** para que cada `git push` publique una versión nueva.
 
-### 1. Crear la base D1 (una sola vez)
+### 1. Despliegue automático desde GitHub (recomendado)
 
-```bash
-npx wrangler login
-npm run cf:setup
-```
+`wrangler.jsonc` declara el binding D1 **sin `database_id`**. Wrangler crea la base `yupay` y la vincula automáticamente en el primer despliegue, así que no tienes que crearla a mano ni copiar UUIDs.
 
-`cf:setup` abre el navegador para iniciar sesión en Cloudflare, crea la base `yupay` y actualiza el `database_id` en `wrangler.jsonc`. Si prefieres hacerlo a mano:
-
-```bash
-npx wrangler d1 create yupay --update-config --binding DB
-```
-
-### 2. Configurar el secreto de sesiones
-
-En el panel de Cloudflare, entra al Worker → **Settings → Variables and Secrets** y crea `AUTH_SECRET` como **Secret** con una cadena aleatoria de al menos 32 caracteres. También puedes usar:
-
-```bash
-npx wrangler secret put AUTH_SECRET
-```
-
-> Sin `AUTH_SECRET` el login devuelve error en producción. En local hay un secreto de desarrollo, pero no se usa en Cloudflare.
-
-### 3. Desplegar desde tu PC (primera prueba)
-
-```bash
-npm run deploy
-```
-
-Esto compila con OpenNext y publica el Worker. La primera petición crea las tablas en D1 automáticamente.
-
-### 4. Despliegue automático desde GitHub (recomendado)
-
-1. Sube el proyecto a GitHub (incluido el `wrangler.jsonc` con el `database_id` real).
+1. El código ya está en `https://github.com/BrayanCahuanaU/Financiero`.
 2. En Cloudflare: **Workers & Pages → Create → Workers → Connect to Git**.
 3. Elige el repositorio `BrayanCahuanaU/Financiero` y la rama `main`.
 4. Configura:
    - **Build command:** `npx opennextjs-cloudflare build`
    - **Deploy command:** `npx opennextjs-cloudflare deploy -- --keep-vars`
-5. En **Settings → Variables and Secrets**, agrega `AUTH_SECRET` como secreto de runtime.
-6. Guarda. Desde ese momento, cada push a `main` compila y despliega automáticamente.
+5. En **Settings → Variables and Secrets**, agrega `AUTH_SECRET` como **Secret** (mínimo 32 caracteres aleatorios). Sin este secreto el login falla en producción.
+6. Guarda y lanza el primer despliegue. Wrangler creará la D1 y el esquema se inicializa en la primera petición.
+7. Desde ese momento, cada push a `main` compila y despliega automáticamente.
+
+### 2. Desplegar desde tu PC (opcional)
+
+```bash
+npx wrangler login
+npm run deploy
+npx wrangler secret put AUTH_SECRET
+```
+
+`npm run deploy` compila con OpenNext y publica el Worker; la D1 se crea sola. Después de definir el secreto, visita la URL `*.workers.dev` que imprime Wrangler.
+
+### 3. Configurar el secreto de sesiones
+
+Si no lo hiciste en el panel:
+
+```bash
+npx wrangler secret put AUTH_SECRET
+```
+
+> En local hay un secreto de desarrollo; en Cloudflare **no** se usa. Sin `AUTH_SECRET` el login devuelve error en producción.
+
+### Probar el Worker en local
+
+```bash
+npm run preview
+```
+
+Esto compila la versión de producción y la ejecuta en el runtime de Workers (Wrangler/Miniflare) con una D1 local. No necesitas crear nada: Wrangler la provisiona al vuelo.
 
 ### Probar el Worker en local
 

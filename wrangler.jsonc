@@ -11,10 +11,9 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "yupay",
-      // Reemplaza este UUID por el que devuelve:
-      //   npx wrangler d1 create yupay --update-config --binding DB
-      "database_id": "00000000-0000-0000-0000-000000000000"
+      "database_name": "yupay"
+      // Sin database_id: Wrangler crea y vincula la base automáticamente
+      // la primera vez que se despliega. No necesitas commitear el UUID.
     }
   ],
   "observability": {
